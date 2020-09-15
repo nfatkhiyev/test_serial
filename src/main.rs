@@ -21,6 +21,8 @@ fn main() {
 
         match buf_reader.read_line(&mut msg) {
             Ok(_) => {
+                msg.pop();
+                msg.pop();
                 println!("{:?}", msg);
                 clone.clear(serialport::ClearBuffer::All).unwrap();
             }
