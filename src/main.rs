@@ -1,19 +1,23 @@
-use rppal::uart::{Parity, Uart};
-use std::path::Path;
+use serialport::{DataBits, FlowControl, Parity, SerialPortSettings, StopBits};
+use std::io::{BufRead, BufReader};
 use std::time;
 
 fn main() {
-    let usb_path = Path::new("/dev/ttyACM0");
-
-    let mut uart = Uart::with_path(usb_path, 9_600, Parity::None, 8, 1).unwrap();
-
+    let button_reader_settings = serialport::SerialPortSettings {
+        baud_rate: 9600,
+        data_bits: DataBits::Eight,
+        flow_control: FlowControl::None,
+        parity: Parity::None,
+        stop_bits: StopBits::One,
+        timeout: time::Duration::from_millis(1),
+    };
+    let button_reader =
+        serialport::open_with_settings("/dev/ttyACM0", &button_reader_settings).unwrap();
+    let mut buf_reader = BufReader::new(button_reader);
     loop {
-        uart.set_read_mode(1, time::Duration::from_millis(500))
-            .unwrap();
+        let mut msg = String::new();
 
-        let mut buffer = [0u8; 1];
-
-        let msg = uart.read(&mut buffer).unwrap();
+        buf_reader.read_line(&mut msg).unwrap();
 
         println!("{:?}", msg);
     }
