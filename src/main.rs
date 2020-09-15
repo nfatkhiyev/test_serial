@@ -1,5 +1,5 @@
 use serialport::{DataBits, FlowControl, Parity, SerialPortSettings, StopBits};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, ErrorKind};
 use std::time;
 
 fn main() {
@@ -9,7 +9,7 @@ fn main() {
         flow_control: FlowControl::None,
         parity: Parity::None,
         stop_bits: StopBits::One,
-        timeout: time::Duration::from_millis(1),
+        timeout: time::Duration::from_millis(10),
     };
     let button_reader =
         serialport::open_with_settings("/dev/ttyACM0", &button_reader_settings).unwrap();
@@ -17,8 +17,14 @@ fn main() {
     loop {
         let mut msg = String::new();
 
-        buf_reader.read_line(&mut msg).unwrap();
+        match buf_reader.read_line(&mut msg) {
+            Ok(_) => {
+                println!("{:?}", msg);
+            }
 
-        println!("{:?}", msg);
+            Err(ref e) if e.kind() == ErrorKind::TimedOut => (),
+
+            Err(e) => eprintln!("{:?}", e),
+        };
     }
 }
